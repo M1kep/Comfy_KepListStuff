@@ -6,6 +6,7 @@ from custom_nodes.Comfy_KepListStuff.nodes.images import (
 from custom_nodes.Comfy_KepListStuff.nodes.list_utils import (
     ListLengthNode,
     JoinFloatLists,
+    JoinImageLists,
 )
 from custom_nodes.Comfy_KepListStuff.nodes.range_nodes import (
     IntRangeNode,
@@ -23,6 +24,7 @@ NODE_CLASS_MAPPINGS = {
     "Image Overlay": ImageLabelOverlay,
     "Stack Images": StackImages,
     "Empty Images": EmptyImages,
+    "Join Image Lists": JoinImageLists,
     "Join Float Lists": JoinFloatLists,
 
 }
