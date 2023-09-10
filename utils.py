@@ -61,7 +61,10 @@ def tensor2pil(image: Tensor) -> PIL.Image.Image:
 def pil2tensor(image: PIL.Image.Image) -> Tensor:
     return torch.from_numpy(np.array(image).astype(np.float32) / 255.0).unsqueeze(0)
 
-
+# Hack: string type that is always equal in not equal comparisons
+class AnyType(str):
+    def __ne__(self, __value: object) -> bool:
+        return False
 
 if __name__ == "__main__":
     # Tests
