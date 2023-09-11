@@ -90,6 +90,15 @@ class ImageLabelOverlay:
         return (ret_images,)
 
 
+# Hack: string type that is always equal in not equal comparisons
+class AnyType(str):
+    def __ne__(self, __value: object) -> bool:
+        return False
+
+
+# Our any instance wants to be a wildcard string
+any = AnyType("*")
+
 class StackImages:
     def __init__(self) -> None:
         pass
@@ -103,6 +112,10 @@ class StackImages:
                 "stack_mode": (["horizontal", "vertical"], {"default": "horizontal"}),
                 "batch_stack_mode": (["horizontal", "vertical"], {"default": "horizontal"}),
             },
+            "optional": {
+                "horizontal_labels": (any,{}),
+                "vertical_labels": (any,{}),
+            }
         }
 
     RELOAD_INST = True
@@ -121,6 +134,8 @@ class StackImages:
             splits: List[int],
             stack_mode: List[str],
             batch_stack_mode: List[str],
+            horizontal_labels: Optional[List[str]] = None,
+            vertical_labels: Optional[List[str]] = None,
     ) -> Tuple[Tensor]:
         if len(stack_mode) != 1:
             raise Exception("Only single stack mode supported.")
@@ -131,7 +146,9 @@ class StackImages:
         batch_stack_direction = batch_stack_mode[0]
 
         if len(splits) == 1:
-            splits = splits * len(images)
+            splits = splits * (int(len(images) / splits[0]))
+            if sum(splits) != len(images):
+                splits.append(len(images) - sum(splits))
         else:
             if sum(splits) != len(images):
                 raise Exception("Sum of splits must equal number of images.")
@@ -156,9 +173,56 @@ class StackImages:
             full_w = batch_w * max(splits)
             full_h = batch_h * len(splits)
 
+        y_label_offset = 0
+        has_horizontal_labels = False
+        if horizontal_labels is not None:
+            horizontal_labels = [str(lbl) for lbl in horizontal_labels]
+            if stack_direction == "horizontal":
+                if len(horizontal_labels) != len(splits):
+                    raise Exception("Number of horizontal labels must match number of splits.")
+            else:
+                if len(horizontal_labels) != max(splits):
+                    raise Exception("Number of horizontal labels must match maximum split size.")
+            full_h += 60
+            y_label_offset = 60
+            has_horizontal_labels = True
+
+        x_label_offset = 0
+        has_vertical_labels = False
+        if vertical_labels is not None:
+            vertical_labels = [str(lbl) for lbl in vertical_labels]
+            if stack_direction == "horizontal":
+                if len(vertical_labels) != max(splits):
+                    raise Exception("Number of vertical labels must match maximum split size.")
+            else:
+                if len(vertical_labels) != len(splits):
+                     raise Exception("Number of vertical labels must match number of splits.")
+            full_w += 60
+            x_label_offset = 60
+            has_vertical_labels = True
+
+
         full_image = Image.new("RGB", (full_w, full_h))
 
         batch_idx = 0
+
+        if has_horizontal_labels:
+            assert horizontal_labels is not None
+            font = ImageFont.truetype(fm.findfont(fm.FontProperties()), 60)
+            for label_idx, label in enumerate(horizontal_labels):
+                x_offset = (batch_w * label_idx) + x_label_offset
+                draw = ImageDraw.Draw(full_image)
+                draw.rectangle((x_offset, 0, x_offset + batch_w, 60), fill="#ffffff")
+                draw.text((x_offset + (batch_w / 2), 0), label, fill="red", font=font)
+
+        if has_vertical_labels:
+            assert vertical_labels is not None
+            font = ImageFont.truetype(fm.findfont(fm.FontProperties()), 60)
+            for label_idx, label in enumerate(vertical_labels):
+                y_offset = (batch_h * label_idx) + y_label_offset
+                draw = ImageDraw.Draw(full_image)
+                draw.rectangle((0, y_offset, 60, y_offset + batch_h), fill="#ffffff")
+                draw.text((0, y_offset + (batch_h / 2)), label, fill="red", font=font)
 
         for split_idx, split in enumerate(splits):
             for idx_in_split in range(split):
@@ -174,11 +238,11 @@ class StackImages:
                         batch_img.paste(tensor2pil(img), (0, y_offset))
 
                 if stack_direction == "horizontal":
-                    x_offset = batch_w * split_idx
-                    y_offset = batch_h * idx_in_split
+                    x_offset = batch_w * split_idx + x_label_offset
+                    y_offset = batch_h * idx_in_split + y_label_offset
                 else:
-                    x_offset = batch_w * idx_in_split
-                    y_offset = batch_h * split_idx
+                    x_offset = batch_w * idx_in_split + x_label_offset
+                    y_offset = batch_h * split_idx + y_label_offset
                 full_image.paste(batch_img, (x_offset, y_offset))
 
             batch_idx += split
