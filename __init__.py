@@ -2,6 +2,7 @@ from custom_nodes.Comfy_KepListStuff.nodes.deprecated import StackImages
 from custom_nodes.Comfy_KepListStuff.nodes.images import (
     ImageLabelOverlay,
     EmptyImages,
+    XYImage,
 )
 from custom_nodes.Comfy_KepListStuff.nodes.list_utils import (
     ListLengthNode,
@@ -14,6 +15,7 @@ from custom_nodes.Comfy_KepListStuff.nodes.range_nodes import (
     IntNumStepsRangeNode,
     FloatNumStepsRangeNode,
 )
+from custom_nodes.Comfy_KepListStuff.nodes.xy import UnzippedProductAny
 
 NODE_CLASS_MAPPINGS = {
     "Range(Step) - Int": IntRangeNode,
@@ -26,6 +28,8 @@ NODE_CLASS_MAPPINGS = {
     "Empty Images": EmptyImages,
     "Join Image Lists": JoinImageLists,
     "Join Float Lists": JoinFloatLists,
+    "XYAny": UnzippedProductAny,
+    "XYImage": XYImage
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
