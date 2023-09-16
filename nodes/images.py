@@ -97,9 +97,9 @@ class AnyType(str):
 
 
 # Our any instance wants to be a wildcard string
-any = AnyType("*")
+ANY = AnyType("*")
 
-class StackImages:
+class XYImage:
     def __init__(self) -> None:
         pass
 
@@ -109,12 +109,12 @@ class StackImages:
             "required": {
                 "images": ("IMAGE",),
                 "splits": ("INT", {"forceInput": True, "min": 1}),
-                "stack_mode": (["horizontal", "vertical"], {"default": "horizontal"}),
+                "flip_axis": (["False", "True"], {"default": "False"}),
                 "batch_stack_mode": (["horizontal", "vertical"], {"default": "horizontal"}),
             },
             "optional": {
-                "horizontal_labels": (any,{}),
-                "vertical_labels": (any,{}),
+                "x_labels": (ANY,{}),
+                "y_labels": (ANY,{}),
             }
         }
 
@@ -124,25 +124,29 @@ class StackImages:
     INPUT_IS_LIST = (True,)
     OUTPUT_IS_LIST = (False,)
     OUTPUT_NODE = True
-    FUNCTION = "stack_images"
+    FUNCTION = "xy_image"
 
     CATEGORY = "List Stuff"
 
-    def stack_images(
+    def xy_image(
             self,
             images: List[Tensor],
             splits: List[int],
-            stack_mode: List[str],
+            flip_axis: List[str],
             batch_stack_mode: List[str],
-            horizontal_labels: Optional[List[str]] = None,
-            vertical_labels: Optional[List[str]] = None,
+            x_labels: Optional[List[str]] = None,
+            y_labels: Optional[List[str]] = None,
     ) -> Tuple[Tensor]:
-        if len(stack_mode) != 1:
-            raise Exception("Only single stack mode supported.")
+        if len(flip_axis) != 1:
+            raise Exception("Only single flip_axis value supported.")
         if len(batch_stack_mode) != 1:
             raise Exception("Only single batch stack mode supported.")
 
-        stack_direction = stack_mode[0]
+        stack_direction = "horizontal"
+        if flip_axis[0] == "True":
+            stack_direction = "vertical"
+            x_labels, y_labels = y_labels, x_labels
+
         batch_stack_direction = batch_stack_mode[0]
 
         if len(splits) == 1:
@@ -175,13 +179,13 @@ class StackImages:
 
         y_label_offset = 0
         has_horizontal_labels = False
-        if horizontal_labels is not None:
-            horizontal_labels = [str(lbl) for lbl in horizontal_labels]
+        if x_labels is not None:
+            x_labels = [str(lbl) for lbl in x_labels]
             if stack_direction == "horizontal":
-                if len(horizontal_labels) != len(splits):
+                if len(x_labels) != len(splits):
                     raise Exception("Number of horizontal labels must match number of splits.")
             else:
-                if len(horizontal_labels) != max(splits):
+                if len(x_labels) != max(splits):
                     raise Exception("Number of horizontal labels must match maximum split size.")
             full_h += 60
             y_label_offset = 60
@@ -189,14 +193,14 @@ class StackImages:
 
         x_label_offset = 0
         has_vertical_labels = False
-        if vertical_labels is not None:
-            vertical_labels = [str(lbl) for lbl in vertical_labels]
+        if y_labels is not None:
+            y_labels = [str(lbl) for lbl in y_labels]
             if stack_direction == "horizontal":
-                if len(vertical_labels) != max(splits):
-                    raise Exception("Number of vertical labels must match maximum split size.")
+                if len(y_labels) != max(splits):
+                    raise Exception(f"Number of vertical labels must match maximum split size. Got {len(y_labels)} labels for {max(splits)} splits.")
             else:
-                if len(vertical_labels) != len(splits):
-                     raise Exception("Number of vertical labels must match number of splits.")
+                if len(y_labels) != len(splits):
+                    raise Exception(f"Number of vertical labels must match number of splits. Got {len(y_labels)} labels for {len(splits)} splits.")
             full_w += 60
             x_label_offset = 60
             has_vertical_labels = True
@@ -207,18 +211,18 @@ class StackImages:
         batch_idx = 0
 
         if has_horizontal_labels:
-            assert horizontal_labels is not None
+            assert x_labels is not None
             font = ImageFont.truetype(fm.findfont(fm.FontProperties()), 60)
-            for label_idx, label in enumerate(horizontal_labels):
+            for label_idx, label in enumerate(x_labels):
                 x_offset = (batch_w * label_idx) + x_label_offset
                 draw = ImageDraw.Draw(full_image)
                 draw.rectangle((x_offset, 0, x_offset + batch_w, 60), fill="#ffffff")
                 draw.text((x_offset + (batch_w / 2), 0), label, fill="red", font=font)
 
         if has_vertical_labels:
-            assert vertical_labels is not None
+            assert y_labels is not None
             font = ImageFont.truetype(fm.findfont(fm.FontProperties()), 60)
-            for label_idx, label in enumerate(vertical_labels):
+            for label_idx, label in enumerate(y_labels):
                 y_offset = (batch_h * label_idx) + y_label_offset
                 draw = ImageDraw.Draw(full_image)
                 draw.rectangle((0, y_offset, 60, y_offset + batch_h), fill="#ffffff")
