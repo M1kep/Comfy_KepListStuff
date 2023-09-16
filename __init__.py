@@ -1,6 +1,6 @@
+from custom_nodes.Comfy_KepListStuff.nodes.deprecated import StackImages
 from custom_nodes.Comfy_KepListStuff.nodes.images import (
     ImageLabelOverlay,
-    StackImages,
     EmptyImages,
 )
 from custom_nodes.Comfy_KepListStuff.nodes.list_utils import (
@@ -26,5 +26,8 @@ NODE_CLASS_MAPPINGS = {
     "Empty Images": EmptyImages,
     "Join Image Lists": JoinImageLists,
     "Join Float Lists": JoinFloatLists,
+}
 
+NODE_DISPLAY_NAME_MAPPINGS = {
+    "Stack Images": "Stack Images(Deprecated)",
 }
