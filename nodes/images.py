@@ -301,6 +301,8 @@ class XYImage:
             full_image = Image.new("RGB", (full_w, full_h))
             full_draw = ImageDraw.Draw(full_image)
 
+            full_draw.rectangle((0, 0, full_w, full_h), fill="#ffffff")
+
             batch_idx = 0
             active_y_offset = 0
             active_x_offset = 0
