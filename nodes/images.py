@@ -350,9 +350,13 @@ class XYImage:
                 font = ImageFont.truetype(fm.findfont(fm.FontProperties()), 60)
                 for label_idx, label in enumerate(y_labels):
                     y_offset = (batch_h * label_idx) + y_label_offset
-                    draw = ImageDraw.Draw(full_image)
-                    draw.rectangle((active_x_offset, y_offset, 60 + active_x_offset, y_offset + batch_h), fill="#ffffff")
-                    draw.text((active_x_offset, y_offset + (batch_h / 2)), label, fill="red", font=font)
+
+                    img_txt = Image.new('RGB', (batch_h, 60))
+                    draw_txt = ImageDraw.Draw(img_txt)
+                    draw_txt.rectangle((0, 0, batch_h, 60), fill="#ffffff")
+                    draw_txt.text((batch_h//2, 0),  label, anchor='ma', fill="red", font=font)
+                    img_txt = img_txt.rotate(90, expand=True)
+                    full_image.paste(img_txt, (active_x_offset, y_offset))
 
             for split_idx, split in enumerate(splits):
                 for idx_in_split in range(split):
