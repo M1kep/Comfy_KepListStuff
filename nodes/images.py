@@ -114,6 +114,9 @@ class XYImage:
                 "z_enabled": (["False", "True"], {"default": "False"}),
             },
             "optional": {
+                "x_main_label": ("STRING", {}),
+                "y_main_label": ("STRING", {}),
+                "z_main_label": ("STRING", {}),
                 "x_labels": (ANY,{}),
                 "y_labels": (ANY,{}),
                 "z_labels": (ANY,{}),
@@ -137,6 +140,9 @@ class XYImage:
             flip_axis: List[str],
             batch_stack_mode: List[str],
             z_enabled: List[str],
+            x_main_label: Optional[List[str]] = None,
+            y_main_label: Optional[List[str]] = None,
+            z_main_label: Optional[List[str]] = None,
             x_labels: Optional[List[str]] = None,
             y_labels: Optional[List[str]] = None,
             z_labels: Optional[List[str]] = None,
@@ -147,11 +153,41 @@ class XYImage:
             raise Exception("Only single batch stack mode supported.")
         if len(z_enabled) != 1:
             raise Exception("Only single z_enabled value supported.")
+        if x_main_label is not None and len(x_main_label) != 1:
+            raise Exception("Only single x_main_label value supported.")
+        if y_main_label is not None and len(y_main_label) != 1:
+            raise Exception("Only single y_main_label value supported.")
+        if z_main_label is not None and len(z_main_label) != 1:
+            raise Exception("Only single z_main_label value supported.")
+
+        if x_main_label is not None and not isinstance(x_main_label[0], str):
+            try:
+                x_main_label[0] = str(x_main_label[0])
+            except:
+                raise Exception("x_main_label must be a string or convertible to a string.")
+        if y_main_label is not None and not isinstance(y_main_label[0], str):
+            try:
+                y_main_label[0] = str(y_main_label[0])
+            except:
+                raise Exception("y_main_label must be a string or convertible to a string.")
+        if z_main_label is not None and not isinstance(z_main_label[0], str):
+            try:
+                z_main_label[0] = str(z_main_label[0])
+            except:
+                raise Exception("z_main_label must be a string or convertible to a string.")
+
+        if x_main_label is not None and x_main_label[0] == '':
+            x_main_label = None
+        if y_main_label is not None and y_main_label[0] == '':
+            y_main_label = None
+        if z_main_label is not None and z_main_label[0] == '':
+            z_main_label = None
 
         stack_direction = "horizontal"
         if flip_axis[0] == "True":
             stack_direction = "vertical"
             x_labels, y_labels = y_labels, x_labels
+            x_main_label, y_main_label = y_main_label, x_main_label
 
         batch_stack_direction = batch_stack_mode[0]
 
@@ -199,6 +235,8 @@ class XYImage:
         else:
             full_w = batch_w * max(splits)
             full_h = batch_h * len(splits)
+        grid_w = full_w
+        grid_h = full_h
 
         y_label_offset = 0
         has_horizontal_labels = False
@@ -228,11 +266,63 @@ class XYImage:
             x_label_offset = 60
             has_vertical_labels = True
 
+        has_z_labels = False
+        if z_labels is not None:
+            has_z_labels = True
+            z_labels = [str(lbl) for lbl in z_labels]
+            full_h += 60
+            y_label_offset += 60
+            if len(z_labels) != num_z:
+                raise Exception(f"Number of z_labels must match number of z splits. Got {len(z_labels)} labels for {num_z} splits.")
+
+
+        has_main_x_label = False
+        if x_main_label is not None:
+            full_h += 60
+            y_label_offset += 60
+            has_main_x_label = True
+
+        has_main_y_label = False
+        if y_main_label is not None:
+            full_w += 60
+            x_label_offset += 60
+            has_main_y_label = True
+
+        has_main_z_label = False
+        if z_enabled[0] == "True" and z_main_label is not None:
+            # Main Z label is combined with Z labels, so don't add extra space if Z labels already exist
+            if not has_z_labels:
+                full_h += 60
+                y_label_offset += 60
+            has_main_z_label = True
+
         images = []
         for z_idx in range(num_z):
             full_image = Image.new("RGB", (full_w, full_h))
 
             batch_idx = 0
+            active_y_offset = 0
+            active_x_offset = 0
+            if has_main_z_label:
+                assert z_main_label is not None
+                this_z_label = z_main_label[0]
+                if has_z_labels:
+                    assert z_labels is not None
+                    this_z_label += f": {z_labels[z_idx]}"
+
+                font = ImageFont.truetype(fm.findfont(fm.FontProperties()), 60)
+                draw = ImageDraw.Draw(full_image)
+                draw.rectangle((0, 0, full_w, 60), fill="#ffffff")
+                draw.text((grid_w//2 + x_label_offset, 0),  this_z_label, anchor='mt', fill="red", font=font)
+                active_y_offset += 60
+
+            if has_main_x_label:
+                assert x_main_label is not None
+                font = ImageFont.truetype(fm.findfont(fm.FontProperties()), 60)
+                draw = ImageDraw.Draw(full_image)
+                draw.rectangle((0, active_y_offset, full_w, 60 + active_y_offset), fill="#ffffff")
+                draw.text((grid_w//2 + x_label_offset, 0 + active_y_offset), x_main_label[0], anchor='mt', fill="red", font=font)
+                active_y_offset += 60
 
             if has_horizontal_labels:
                 assert x_labels is not None
@@ -240,8 +330,20 @@ class XYImage:
                 for label_idx, label in enumerate(x_labels):
                     x_offset = (batch_w * label_idx) + x_label_offset
                     draw = ImageDraw.Draw(full_image)
-                    draw.rectangle((x_offset, 0, x_offset + batch_w, 60), fill="#ffffff")
-                    draw.text((x_offset + (batch_w / 2), 0), label, fill="red", font=font)
+                    draw.rectangle((x_offset, 0 + active_y_offset, x_offset + batch_w, 60 + active_y_offset), fill="#ffffff")
+                    draw.text((x_offset + (batch_w / 2), 0 + active_y_offset), label, fill="red", font=font)
+
+            if has_main_y_label:
+                assert y_main_label is not None
+                font = ImageFont.truetype(fm.findfont(fm.FontProperties()), 60)
+
+                img_txt = Image.new('RGB', (full_h - active_y_offset, 60))
+                draw_txt = ImageDraw.Draw(img_txt)
+                draw_txt.rectangle((0, 0, full_h - active_y_offset, 60), fill="#ffffff")
+                draw_txt.text(((full_h - active_y_offset)//2, 0),  y_main_label[0], anchor='mt', fill="red", font=font)
+                img_txt = img_txt.rotate(90, expand=True)
+                full_image.paste(img_txt, (active_x_offset, active_y_offset))
+                active_x_offset += 60
 
             if has_vertical_labels:
                 assert y_labels is not None
@@ -249,8 +351,8 @@ class XYImage:
                 for label_idx, label in enumerate(y_labels):
                     y_offset = (batch_h * label_idx) + y_label_offset
                     draw = ImageDraw.Draw(full_image)
-                    draw.rectangle((0, y_offset, 60, y_offset + batch_h), fill="#ffffff")
-                    draw.text((0, y_offset + (batch_h / 2)), label, fill="red", font=font)
+                    draw.rectangle((active_x_offset, y_offset, 60 + active_x_offset, y_offset + batch_h), fill="#ffffff")
+                    draw.text((active_x_offset, y_offset + (batch_h / 2)), label, fill="red", font=font)
 
             for split_idx, split in enumerate(splits):
                 for idx_in_split in range(split):
