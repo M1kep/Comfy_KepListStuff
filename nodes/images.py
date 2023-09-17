@@ -70,8 +70,8 @@ class ImageLabelOverlay:
             batch = []
             for i_idx, img in enumerate(img_batch):
                 pil_img = tensor2pil(img)
-                print(f"Batch: {b_idx} | img: {i_idx}")
-                print(img.size())
+                # print(f"Batch: {b_idx} | img: {i_idx}")
+                # print(img.size())
                 draw = ImageDraw.Draw(pil_img)
 
                 draw.text((0, image_h - 60), f"B: {b_idx} | I: {i_idx}", fill="red", font=font)
