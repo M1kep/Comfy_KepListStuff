@@ -109,4 +109,7 @@ class UnzippedProductAny:
             for z in Z:
                 Z_out.append(z)
 
+        if Z_Labels is None:
+            Z_Labels = []
+
         return (X_out, X_Labels, Y_out, Y_Labels, Z_out, Z_Labels, len(X_out), len(Y))
