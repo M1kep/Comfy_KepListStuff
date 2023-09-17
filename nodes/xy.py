@@ -1,5 +1,5 @@
 import itertools
-from typing import List, Any
+from typing import List, Any, Optional
 
 
 class AnyType(str):
@@ -21,28 +21,59 @@ class UnzippedProductAny:
             "required": {
                 "X": (ANY, {}),
                 "Y": (ANY, {}),
-                "X_Label_Fallback": (["str()", "Numbers"], {"default": "str()", "name": "X Label Fallback"}),
-                "Y_Label_Fallback": (["str()", "Numbers"], {"default": "str()", "name": "Y Label Fallback"})
+                "X_Label_Fallback": (["str()", "Numbers"], {"default": "str()"}),
+                "Y_Label_Fallback": (["str()", "Numbers"], {"default": "str()"}),
+                "Z_Label_Fallback": (["str()", "Numbers"], {"default": "str()"}),
             },
-            "optional": {"X_Labels": (ANY, {"name": "X Labels"}), "Y_Labels": (ANY, {"name": "Y Labels"})},
+            "optional": {
+                "Z": (ANY, {}),
+                "X_Labels": (ANY, {}),
+                "Y_Labels": (ANY, {}),
+                "Z_Labels": (ANY, {}),
+            },
         }
 
-    RETURN_TYPES = (ANY, "STRING", ANY, "STRING", "INT", "INT")
-    RETURN_NAMES = ("X Values", "X Labels", "Y Values", "Y Labels", "Total Images", "Split Every")
-    OUTPUT_IS_LIST = (True, True, True, True, False, False)
+    RETURN_NAMES, RETURN_TYPES = zip(*{
+        "X Values": ANY,
+        "X Labels": "STRING",
+        "Y Values": ANY,
+        "Y Labels": "STRING",
+        "Z Values": ANY,
+        "Z Labels": "STRING",
+        "Total Images": "INT",
+        "Split Every": "INT",
+    }.items())
+
+    OUTPUT_IS_LIST = (True, True, True, True, True, True, False, False)
     INPUT_IS_LIST = True
     FUNCTION = "to_xy"
 
     CATEGORY = "List Stuff"
 
-    def to_xy(self, X: List[Any], Y: List[Any], X_Label_Fallback: List[str], Y_Label_Fallback: List[str], X_Labels: List[Any] = None, Y_Labels: List[Any] = None):
-        #region Validation
+    def to_xy(
+        self,
+        X: List[Any],
+        Y: List[Any],
+        X_Label_Fallback: List[str],
+        Y_Label_Fallback: List[str],
+        Z_Label_Fallback: List[str],
+        Z: Optional[List[Any]] = None,
+        X_Labels: Optional[List[Any]] = None,
+        Y_Labels: Optional[List[Any]] = None,
+        Z_Labels: Optional[List[Any]] = None,
+    ):
+        # region Validation
         if len(X_Label_Fallback) != 1:
             raise Exception("X_Label_Fallback must be a single value")
         if len(Y_Label_Fallback) != 1:
             raise Exception("Y_Label_Fallback must be a single value")
+        if len(Z_Label_Fallback) != 1:
+            raise Exception("Z_Label_Fallback must be a single value")
 
-        #region Labels
+        if Z_Labels is not None and Z is None:
+            raise Exception("Z_Labels must be None if Z is None")
+
+        # region Labels
         if X_Label_Fallback[0] == "str()":
             get_x_fallback_labels = lambda x: [str(i) for i in x]
         else:
@@ -53,15 +84,29 @@ class UnzippedProductAny:
         else:
             get_y_fallback_labels = lambda x: list(range(len(x)))
 
+        if Z_Label_Fallback[0] == "str()":
+            get_z_fallback_labels = lambda x: [str(i) for i in x]
+        else:
+            get_z_fallback_labels = lambda x: list(range(len(x)))
+
         if X_Labels is None:
             X_Labels = get_x_fallback_labels(X)
         if Y_Labels is None:
             Y_Labels = get_y_fallback_labels(Y)
-        #endregion
+        if Z_Labels is None and Z is not None:
+            Z_Labels = get_z_fallback_labels(Z)
+        # endregion
 
-        product = itertools.product(X, Y)
-        X_out, Y_out = zip(*product)
+        xy_product = itertools.product(X, Y)
+        X_out, Y_out = zip(*xy_product)
         X_out = list(X_out)
         Y_out = list(Y_out)
 
-        return (X_out, X_Labels, Y_out, Y_Labels, len(X_out), len(Y))
+        Z_out = []
+        if Z is not None:
+            X_out = X_out * len(Z)
+            Y_out = Y_out * len(Z)
+            for z in Z:
+                Z_out.append(z)
+
+        return (X_out, X_Labels, Y_out, Y_Labels, Z_out, Z_Labels, len(X_out), len(Y))

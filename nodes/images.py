@@ -111,10 +111,12 @@ class XYImage:
                 "splits": ("INT", {"forceInput": True, "min": 1}),
                 "flip_axis": (["False", "True"], {"default": "False"}),
                 "batch_stack_mode": (["horizontal", "vertical"], {"default": "horizontal"}),
+                "z_enabled": (["False", "True"], {"default": "False"}),
             },
             "optional": {
                 "x_labels": (ANY,{}),
                 "y_labels": (ANY,{}),
+                "z_labels": (ANY,{}),
             }
         }
 
@@ -122,7 +124,7 @@ class XYImage:
     RETURN_TYPES = ("IMAGE",)
     RETURN_NAMES = ("Image",)
     INPUT_IS_LIST = (True,)
-    OUTPUT_IS_LIST = (False,)
+    OUTPUT_IS_LIST = (True,)
     OUTPUT_NODE = True
     FUNCTION = "xy_image"
 
@@ -134,13 +136,17 @@ class XYImage:
             splits: List[int],
             flip_axis: List[str],
             batch_stack_mode: List[str],
+            z_enabled: List[str],
             x_labels: Optional[List[str]] = None,
             y_labels: Optional[List[str]] = None,
+            z_labels: Optional[List[str]] = None,
     ) -> Tuple[Tensor]:
         if len(flip_axis) != 1:
             raise Exception("Only single flip_axis value supported.")
         if len(batch_stack_mode) != 1:
             raise Exception("Only single batch stack mode supported.")
+        if len(z_enabled) != 1:
+            raise Exception("Only single z_enabled value supported.")
 
         stack_direction = "horizontal"
         if flip_axis[0] == "True":
@@ -159,6 +165,23 @@ class XYImage:
 
         batches = images
         batch_size = len(batches[0])
+
+        # TODO: Some better way...
+        # Currently chops splits to match x_labels/y_labels and then loops over the split set over and over
+        num_z = 1
+        splits_per_z = len(splits)
+        if z_enabled[0] == "True":
+            if y_labels is None or x_labels is None:
+                raise Exception("Must provide x_labels and y_labels when z_enabled is True.")
+
+            if stack_direction == "horizontal":
+                splits_per_z = len(x_labels)
+            else:
+                splits_per_z = len(y_labels)
+
+            num_z = int(len(splits) / splits_per_z)
+            splits = splits[:splits_per_z]
+            images_per_z = sum(splits)
 
         image_h, image_w, _ = batches[0][0].size()
         if batch_stack_direction == "horizontal":
@@ -205,52 +228,54 @@ class XYImage:
             x_label_offset = 60
             has_vertical_labels = True
 
+        images = []
+        for z_idx in range(num_z):
+            full_image = Image.new("RGB", (full_w, full_h))
 
-        full_image = Image.new("RGB", (full_w, full_h))
+            batch_idx = 0
 
-        batch_idx = 0
+            if has_horizontal_labels:
+                assert x_labels is not None
+                font = ImageFont.truetype(fm.findfont(fm.FontProperties()), 60)
+                for label_idx, label in enumerate(x_labels):
+                    x_offset = (batch_w * label_idx) + x_label_offset
+                    draw = ImageDraw.Draw(full_image)
+                    draw.rectangle((x_offset, 0, x_offset + batch_w, 60), fill="#ffffff")
+                    draw.text((x_offset + (batch_w / 2), 0), label, fill="red", font=font)
 
-        if has_horizontal_labels:
-            assert x_labels is not None
-            font = ImageFont.truetype(fm.findfont(fm.FontProperties()), 60)
-            for label_idx, label in enumerate(x_labels):
-                x_offset = (batch_w * label_idx) + x_label_offset
-                draw = ImageDraw.Draw(full_image)
-                draw.rectangle((x_offset, 0, x_offset + batch_w, 60), fill="#ffffff")
-                draw.text((x_offset + (batch_w / 2), 0), label, fill="red", font=font)
+            if has_vertical_labels:
+                assert y_labels is not None
+                font = ImageFont.truetype(fm.findfont(fm.FontProperties()), 60)
+                for label_idx, label in enumerate(y_labels):
+                    y_offset = (batch_h * label_idx) + y_label_offset
+                    draw = ImageDraw.Draw(full_image)
+                    draw.rectangle((0, y_offset, 60, y_offset + batch_h), fill="#ffffff")
+                    draw.text((0, y_offset + (batch_h / 2)), label, fill="red", font=font)
 
-        if has_vertical_labels:
-            assert y_labels is not None
-            font = ImageFont.truetype(fm.findfont(fm.FontProperties()), 60)
-            for label_idx, label in enumerate(y_labels):
-                y_offset = (batch_h * label_idx) + y_label_offset
-                draw = ImageDraw.Draw(full_image)
-                draw.rectangle((0, y_offset, 60, y_offset + batch_h), fill="#ffffff")
-                draw.text((0, y_offset + (batch_h / 2)), label, fill="red", font=font)
+            for split_idx, split in enumerate(splits):
+                for idx_in_split in range(split):
+                    batch_img = Image.new("RGB", (batch_w, batch_h))
+                    batch = batches[batch_idx + idx_in_split + images_per_z * z_idx]
+                    if batch_stack_direction == "horizontal":
+                        for img_idx, img in enumerate(batch):
+                            x_offset = image_w * img_idx
+                            batch_img.paste(tensor2pil(img), (x_offset, 0))
+                    else:
+                        for img_idx, img in enumerate(batch):
+                            y_offset = image_h * img_idx
+                            batch_img.paste(tensor2pil(img), (0, y_offset))
 
-        for split_idx, split in enumerate(splits):
-            for idx_in_split in range(split):
-                batch_img = Image.new("RGB", (batch_w, batch_h))
-                batch = batches[batch_idx + idx_in_split]
-                if batch_stack_direction == "horizontal":
-                    for img_idx, img in enumerate(batch):
-                        x_offset = image_w * img_idx
-                        batch_img.paste(tensor2pil(img), (x_offset, 0))
-                else:
-                    for img_idx, img in enumerate(batch):
-                        y_offset = image_h * img_idx
-                        batch_img.paste(tensor2pil(img), (0, y_offset))
+                    if stack_direction == "horizontal":
+                        x_offset = batch_w * split_idx + x_label_offset
+                        y_offset = batch_h * idx_in_split + y_label_offset
+                    else:
+                        x_offset = batch_w * idx_in_split + x_label_offset
+                        y_offset = batch_h * split_idx + y_label_offset
+                    full_image.paste(batch_img, (x_offset, y_offset))
 
-                if stack_direction == "horizontal":
-                    x_offset = batch_w * split_idx + x_label_offset
-                    y_offset = batch_h * idx_in_split + y_label_offset
-                else:
-                    x_offset = batch_w * idx_in_split + x_label_offset
-                    y_offset = batch_h * split_idx + y_label_offset
-                full_image.paste(batch_img, (x_offset, y_offset))
-
-            batch_idx += split
-        return (pil2tensor(full_image),)
+                batch_idx += split
+            images.append(pil2tensor(full_image))
+        return (images,)
 
 class EmptyImages:
     def __init__(self) -> None:
