@@ -206,6 +206,7 @@ class XYImage:
         # Currently chops splits to match x_labels/y_labels and then loops over the split set over and over
         num_z = 1
         splits_per_z = len(splits)
+        images_per_z = len(images)
         if z_enabled[0] == "True":
             if y_labels is None or x_labels is None:
                 raise Exception("Must provide x_labels and y_labels when z_enabled is True.")
