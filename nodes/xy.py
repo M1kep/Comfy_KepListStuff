@@ -104,10 +104,12 @@ class UnzippedProductAny:
 
         Z_out = []
         if Z is not None:
+            original_len = len(X_out)
             X_out = X_out * len(Z)
             Y_out = Y_out * len(Z)
             for z in Z:
-                Z_out.append(z)
+                Z_out.extend([z] * original_len)
+
 
         if Z_Labels is None:
             Z_Labels = []
