@@ -299,6 +299,7 @@ class XYImage:
         images = []
         for z_idx in range(num_z):
             full_image = Image.new("RGB", (full_w, full_h))
+            full_draw = ImageDraw.Draw(full_image)
 
             batch_idx = 0
             active_y_offset = 0
@@ -311,17 +312,15 @@ class XYImage:
                     this_z_label += f": {z_labels[z_idx]}"
 
                 font = ImageFont.truetype(fm.findfont(fm.FontProperties()), 60)
-                draw = ImageDraw.Draw(full_image)
-                draw.rectangle((0, 0, full_w, 60), fill="#ffffff")
-                draw.text((grid_w//2 + x_label_offset, 0),  this_z_label, anchor='ma', fill="red", font=font)
+                full_draw.rectangle((0, 0, full_w, 60), fill="#ffffff")
+                full_draw.text((grid_w//2 + x_label_offset, 0),  this_z_label, anchor='ma', fill="red", font=font)
                 active_y_offset += 60
 
             if has_main_x_label:
                 assert x_main_label is not None
                 font = ImageFont.truetype(fm.findfont(fm.FontProperties()), 60)
-                draw = ImageDraw.Draw(full_image)
-                draw.rectangle((0, active_y_offset, full_w, 60 + active_y_offset), fill="#ffffff")
-                draw.text((grid_w//2 + x_label_offset, 0 + active_y_offset), x_main_label[0], anchor='ma', fill="red", font=font)
+                full_draw.rectangle((0, active_y_offset, full_w, 60 + active_y_offset), fill="#ffffff")
+                full_draw.text((grid_w//2 + x_label_offset, 0 + active_y_offset), x_main_label[0], anchor='ma', fill="red", font=font)
                 active_y_offset += 60
 
             if has_horizontal_labels:
@@ -329,9 +328,8 @@ class XYImage:
                 font = ImageFont.truetype(fm.findfont(fm.FontProperties()), 60)
                 for label_idx, label in enumerate(x_labels):
                     x_offset = (batch_w * label_idx) + x_label_offset
-                    draw = ImageDraw.Draw(full_image)
-                    draw.rectangle((x_offset, 0 + active_y_offset, x_offset + batch_w, 60 + active_y_offset), fill="#ffffff")
-                    draw.text((x_offset + (batch_w / 2), 0 + active_y_offset), label, anchor='ma', fill="red", font=font)
+                    full_draw.rectangle((x_offset, 0 + active_y_offset, x_offset + batch_w, 60 + active_y_offset), fill="#ffffff")
+                    full_draw.text((x_offset + (batch_w / 2), 0 + active_y_offset), label, anchor='ma', fill="red", font=font)
 
             if has_main_y_label:
                 assert y_main_label is not None
