@@ -313,7 +313,7 @@ class XYImage:
                 font = ImageFont.truetype(fm.findfont(fm.FontProperties()), 60)
                 draw = ImageDraw.Draw(full_image)
                 draw.rectangle((0, 0, full_w, 60), fill="#ffffff")
-                draw.text((grid_w//2 + x_label_offset, 0),  this_z_label, anchor='mt', fill="red", font=font)
+                draw.text((grid_w//2 + x_label_offset, 0),  this_z_label, anchor='ma', fill="red", font=font)
                 active_y_offset += 60
 
             if has_main_x_label:
@@ -321,7 +321,7 @@ class XYImage:
                 font = ImageFont.truetype(fm.findfont(fm.FontProperties()), 60)
                 draw = ImageDraw.Draw(full_image)
                 draw.rectangle((0, active_y_offset, full_w, 60 + active_y_offset), fill="#ffffff")
-                draw.text((grid_w//2 + x_label_offset, 0 + active_y_offset), x_main_label[0], anchor='mt', fill="red", font=font)
+                draw.text((grid_w//2 + x_label_offset, 0 + active_y_offset), x_main_label[0], anchor='ma', fill="red", font=font)
                 active_y_offset += 60
 
             if has_horizontal_labels:
@@ -331,7 +331,7 @@ class XYImage:
                     x_offset = (batch_w * label_idx) + x_label_offset
                     draw = ImageDraw.Draw(full_image)
                     draw.rectangle((x_offset, 0 + active_y_offset, x_offset + batch_w, 60 + active_y_offset), fill="#ffffff")
-                    draw.text((x_offset + (batch_w / 2), 0 + active_y_offset), label, fill="red", font=font)
+                    draw.text((x_offset + (batch_w / 2), 0 + active_y_offset), label, anchor='ma', fill="red", font=font)
 
             if has_main_y_label:
                 assert y_main_label is not None
@@ -340,7 +340,7 @@ class XYImage:
                 img_txt = Image.new('RGB', (full_h - active_y_offset, 60))
                 draw_txt = ImageDraw.Draw(img_txt)
                 draw_txt.rectangle((0, 0, full_h - active_y_offset, 60), fill="#ffffff")
-                draw_txt.text(((full_h - active_y_offset)//2, 0),  y_main_label[0], anchor='mt', fill="red", font=font)
+                draw_txt.text(((full_h - active_y_offset)//2, 0),  y_main_label[0], anchor='ma', fill="red", font=font)
                 img_txt = img_txt.rotate(90, expand=True)
                 full_image.paste(img_txt, (active_x_offset, active_y_offset))
                 active_x_offset += 60
