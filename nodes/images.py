@@ -315,13 +315,23 @@ class EmptyImages:
                     raise Exception("Sum of splits must match number of images.")
 
         ret_images = []
-        for split in splits:
+        for split_idx, split in enumerate(splits):
             # Rotate between fully dynamic range of colors
-            color = (split * 10, split * 20, split * 30)
-            for _ in range(split):
+            base_color = (
+                50 + (split_idx * 45) % 200,  # Cycle between 50 and 250
+                30 + (split_idx * 75) % 200,
+                10 + (split_idx * 105) % 200,
+            )
+            print(f"Splits: {split} | Base Color: {base_color}")
+
+            for i in range(split):
                 batch_tensor = torch.zeros(batch_size[0], 512, 512, 3)
                 for batch_idx in range(batch_size[0]):
-                    batch_color = (color[0] + 75 * batch_idx, color[1], color[2])
+                    batch_color = (
+                        (base_color[0] + int(((255 - base_color[0]) / batch_size[0]) * batch_idx)),
+                        (base_color[1] + int(((255 - base_color[1]) / batch_size[0]) * batch_idx)),
+                        (base_color[2] + int(((255 - base_color[2]) / batch_size[0]) * batch_idx)),
+                    )
                     image = Image.new("RGB", (512, 512), color=batch_color)
                     batch_tensor[batch_idx] = pil2tensor(image)
                 ret_images.append(batch_tensor)
