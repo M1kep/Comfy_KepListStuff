@@ -1,5 +1,5 @@
 import itertools
-from typing import List, Any, Optional
+from typing import List, Any, Optional, Callable, Tuple, Dict
 
 
 class AnyType(str):
@@ -16,7 +16,7 @@ class UnzippedProductAny:
         pass
 
     @classmethod
-    def INPUT_TYPES(s):
+    def INPUT_TYPES(s) -> Dict[str, Dict[str, Any]]:
         return {
             "required": {
                 "X": (ANY, {}),
@@ -61,7 +61,7 @@ class UnzippedProductAny:
         X_Labels: Optional[List[Any]] = None,
         Y_Labels: Optional[List[Any]] = None,
         Z_Labels: Optional[List[Any]] = None,
-    ):
+    ) -> Tuple[List[Any], List[str], List[Any], List[str], List[Any], List[str], int, int]:
         # region Validation
         if len(X_Label_Fallback) != 1:
             raise Exception("X_Label_Fallback must be a single value")
@@ -74,20 +74,23 @@ class UnzippedProductAny:
             raise Exception("Z_Labels must be None if Z is None")
 
         # region Labels
+        get_x_fallback_labels: Callable[[Any], List[str]]
         if X_Label_Fallback[0] == "str()":
             get_x_fallback_labels = lambda x: [str(i) for i in x]
         else:
-            get_x_fallback_labels = lambda x: list(range(len(x)))
+            get_x_fallback_labels = lambda x: [str(i) for i in range(len(x))]
 
+        get_y_fallback_labels: Callable[[Any], List[str]]
         if Y_Label_Fallback[0] == "str()":
             get_y_fallback_labels = lambda x: [str(i) for i in x]
         else:
-            get_y_fallback_labels = lambda x: list(range(len(x)))
+            get_y_fallback_labels = lambda x: [str(i) for i in range(len(x))]
 
+        get_z_fallback_labels: Callable[[Any], List[str]]
         if Z_Label_Fallback[0] == "str()":
             get_z_fallback_labels = lambda x: [str(i) for i in x]
         else:
-            get_z_fallback_labels = lambda x: list(range(len(x)))
+            get_z_fallback_labels = lambda x: [str(i) for i in range(len(x))]
 
         if X_Labels is None:
             X_Labels = get_x_fallback_labels(X)
@@ -98,9 +101,9 @@ class UnzippedProductAny:
         # endregion
 
         xy_product = itertools.product(X, Y)
-        X_out, Y_out = zip(*xy_product)
-        X_out = list(X_out)
-        Y_out = list(Y_out)
+        X_out_tuple, Y_out_tuple = zip(*xy_product)
+        X_out: List[str] = list(X_out_tuple)
+        Y_out: List[str] = list(Y_out_tuple)
 
         Z_out = []
         if Z is not None:
@@ -114,4 +117,4 @@ class UnzippedProductAny:
         if Z_Labels is None:
             Z_Labels = []
 
-        return (X_out, X_Labels, Y_out, Y_Labels, Z_out, Z_Labels, len(X_out), len(Y))
+        return X_out, X_Labels, Y_out, Y_Labels, Z_out, Z_Labels, len(X_out), len(Y)
