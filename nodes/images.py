@@ -133,6 +133,10 @@ class XYImage:
 
     CATEGORY = "List Stuff"
 
+
+    MAIN_LABEL_SIZE = 60
+    LABEL_SIZE = 60
+
     def xy_image(
             self,
             images: List[Tensor],
@@ -146,7 +150,7 @@ class XYImage:
             x_labels: Optional[List[str]] = None,
             y_labels: Optional[List[str]] = None,
             z_labels: Optional[List[str]] = None,
-    ) -> Tuple[Tensor]:
+    ) -> Tuple[List[Tensor]]:
         if len(flip_axis) != 1:
             raise Exception("Only single flip_axis value supported.")
         if len(batch_stack_mode) != 1:
@@ -249,8 +253,8 @@ class XYImage:
             else:
                 if len(x_labels) != max(splits):
                     raise Exception("Number of horizontal labels must match maximum split size.")
-            full_h += 60
-            y_label_offset = 60
+            full_h += self.LABEL_SIZE
+            y_label_offset = self.LABEL_SIZE
             has_horizontal_labels = True
 
         x_label_offset = 0
@@ -263,38 +267,38 @@ class XYImage:
             else:
                 if len(y_labels) != len(splits):
                     raise Exception(f"Number of vertical labels must match number of splits. Got {len(y_labels)} labels for {len(splits)} splits.")
-            full_w += 60
-            x_label_offset = 60
+            full_w += self.LABEL_SIZE
+            x_label_offset = self.LABEL_SIZE
             has_vertical_labels = True
 
         has_z_labels = False
         if z_labels is not None:
             has_z_labels = True
             z_labels = [str(lbl) for lbl in z_labels]
-            full_h += 60
-            y_label_offset += 60
+            full_h += self.LABEL_SIZE
+            y_label_offset += self.LABEL_SIZE
             if len(z_labels) != num_z:
                 raise Exception(f"Number of z_labels must match number of z splits. Got {len(z_labels)} labels for {num_z} splits.")
 
 
         has_main_x_label = False
         if x_main_label is not None:
-            full_h += 60
-            y_label_offset += 60
+            full_h += self.MAIN_LABEL_SIZE
+            y_label_offset += self.MAIN_LABEL_SIZE
             has_main_x_label = True
 
         has_main_y_label = False
         if y_main_label is not None:
-            full_w += 60
-            x_label_offset += 60
+            full_w += self.MAIN_LABEL_SIZE
+            x_label_offset += self.MAIN_LABEL_SIZE
             has_main_y_label = True
 
         has_main_z_label = False
         if z_enabled[0] == "True" and z_main_label is not None:
             # Main Z label is combined with Z labels, so don't add extra space if Z labels already exist
             if not has_z_labels:
-                full_h += 60
-                y_label_offset += 60
+                full_h += self.MAIN_LABEL_SIZE
+                y_label_offset += self.MAIN_LABEL_SIZE
             has_main_z_label = True
 
         images = []
@@ -314,47 +318,47 @@ class XYImage:
                     assert z_labels is not None
                     this_z_label += f": {z_labels[z_idx]}"
 
-                font = ImageFont.truetype(fm.findfont(fm.FontProperties()), 60)
-                full_draw.rectangle((0, 0, full_w, 60), fill="#ffffff")
+                font = ImageFont.truetype(fm.findfont(fm.FontProperties()), self.MAIN_LABEL_SIZE)
+                full_draw.rectangle((0, 0, full_w, self.MAIN_LABEL_SIZE), fill="#ffffff")
                 full_draw.text((grid_w//2 + x_label_offset, 0),  this_z_label, anchor='ma', fill="red", font=font)
-                active_y_offset += 60
+                active_y_offset += self.MAIN_LABEL_SIZE
 
             if has_main_x_label:
                 assert x_main_label is not None
-                font = ImageFont.truetype(fm.findfont(fm.FontProperties()), 60)
-                full_draw.rectangle((0, active_y_offset, full_w, 60 + active_y_offset), fill="#ffffff")
+                font = ImageFont.truetype(fm.findfont(fm.FontProperties()), self.MAIN_LABEL_SIZE)
+                full_draw.rectangle((0, active_y_offset, full_w, self.MAIN_LABEL_SIZE + active_y_offset), fill="#ffffff")
                 full_draw.text((grid_w//2 + x_label_offset, 0 + active_y_offset), x_main_label[0], anchor='ma', fill="red", font=font)
-                active_y_offset += 60
+                active_y_offset += self.MAIN_LABEL_SIZE
 
             if has_horizontal_labels:
                 assert x_labels is not None
-                font = ImageFont.truetype(fm.findfont(fm.FontProperties()), 60)
+                font = ImageFont.truetype(fm.findfont(fm.FontProperties()), self.LABEL_SIZE)
                 for label_idx, label in enumerate(x_labels):
                     x_offset = (batch_w * label_idx) + x_label_offset
-                    full_draw.rectangle((x_offset, 0 + active_y_offset, x_offset + batch_w, 60 + active_y_offset), fill="#ffffff")
+                    full_draw.rectangle((x_offset, 0 + active_y_offset, x_offset + batch_w, self.LABEL_SIZE + active_y_offset), fill="#ffffff")
                     full_draw.text((x_offset + (batch_w / 2), 0 + active_y_offset), label, anchor='ma', fill="red", font=font)
 
             if has_main_y_label:
                 assert y_main_label is not None
-                font = ImageFont.truetype(fm.findfont(fm.FontProperties()), 60)
+                font = ImageFont.truetype(fm.findfont(fm.FontProperties()), self.MAIN_LABEL_SIZE)
 
-                img_txt = Image.new('RGB', (full_h - active_y_offset, 60))
+                img_txt = Image.new('RGB', (full_h - active_y_offset, self.MAIN_LABEL_SIZE))
                 draw_txt = ImageDraw.Draw(img_txt)
-                draw_txt.rectangle((0, 0, full_h - active_y_offset, 60), fill="#ffffff")
+                draw_txt.rectangle((0, 0, full_h - active_y_offset, self.MAIN_LABEL_SIZE), fill="#ffffff")
                 draw_txt.text(((full_h - active_y_offset)//2, 0),  y_main_label[0], anchor='ma', fill="red", font=font)
                 img_txt = img_txt.rotate(90, expand=True)
                 full_image.paste(img_txt, (active_x_offset, active_y_offset))
-                active_x_offset += 60
+                active_x_offset += self.MAIN_LABEL_SIZE
 
             if has_vertical_labels:
                 assert y_labels is not None
-                font = ImageFont.truetype(fm.findfont(fm.FontProperties()), 60)
+                font = ImageFont.truetype(fm.findfont(fm.FontProperties()), self.LABEL_SIZE)
                 for label_idx, label in enumerate(y_labels):
                     y_offset = (batch_h * label_idx) + y_label_offset
 
-                    img_txt = Image.new('RGB', (batch_h, 60))
+                    img_txt = Image.new('RGB', (batch_h, self.LABEL_SIZE))
                     draw_txt = ImageDraw.Draw(img_txt)
-                    draw_txt.rectangle((0, 0, batch_h, 60), fill="#ffffff")
+                    draw_txt.rectangle((0, 0, batch_h, self.LABEL_SIZE), fill="#ffffff")
                     draw_txt.text((batch_h//2, 0),  label, anchor='ma', fill="red", font=font)
                     img_txt = img_txt.rotate(90, expand=True)
                     full_image.paste(img_txt, (active_x_offset, y_offset))
