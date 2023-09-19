@@ -60,14 +60,14 @@ class ImageLabelOverlay:
                     f"Non-matching input sizes got {len(batches)} Image Batches, {len(labels)} Labels for label type {l_type}"
                 )
 
-        image_h, image_w, _ = batches[0][0].size()
+        image_h, _, _ = batches[0][0].size()
 
         font = ImageFont.truetype(fm.findfont(fm.FontProperties()), 60)
 
-        ret_images = []
+        ret_images: List[Tensor]= []
         loop_gen = zip_with_fill(batches, float_labels, int_labels, str_labels)
         for b_idx, (img_batch, float_lbl, int_lbl, str_lbl) in enumerate(loop_gen):
-            batch = []
+            batch: List[Tensor] = []
             for i_idx, img in enumerate(img_batch):
                 pil_img = tensor2pil(img)
                 # print(f"Batch: {b_idx} | img: {i_idx}")
@@ -77,7 +77,7 @@ class ImageLabelOverlay:
                 draw.text((0, image_h - 60), f"B: {b_idx} | I: {i_idx}", fill="red", font=font)
 
                 y_offset = 0
-                for lbl_type, lbl in zip(["float", "int", "str"], [float_lbl, int_lbl, str_lbl]):
+                for _, lbl in zip(["float", "int", "str"], [float_lbl, int_lbl, str_lbl]):
                     if lbl is None:
                         continue
                     draw.rectangle((0, 0 + y_offset, 512, 60 + y_offset), fill="#ffff33")
@@ -241,7 +241,7 @@ class XYImage:
             full_w = batch_w * max(splits)
             full_h = batch_h * len(splits)
         grid_w = full_w
-        grid_h = full_h
+        _ = full_h
 
         y_label_offset = 0
         has_horizontal_labels = False
@@ -450,7 +450,10 @@ class EmptyImages:
                 if sum(splits) != num_images[0]:
                     raise Exception("Sum of splits must match number of images.")
 
-        ret_images = []
+        if splits is None:
+            raise ValueError("Unexpected error: Splits is None")
+
+        ret_images: List[Tensor] = []
         for split_idx, split in enumerate(splits):
             # Rotate between fully dynamic range of colors
             base_color = (
@@ -460,7 +463,7 @@ class EmptyImages:
             )
             print(f"Splits: {split} | Base Color: {base_color}")
 
-            for i in range(split):
+            for _ in range(split):
                 batch_tensor = torch.zeros(batch_size[0], 512, 512, 3)
                 for batch_idx in range(batch_size[0]):
                     batch_color = (
