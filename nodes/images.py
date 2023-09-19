@@ -1,4 +1,6 @@
-from typing import Any, Dict, List, Tuple, Union, Optional
+import re
+from pathlib import Path
+from typing import Any, Dict, List, Tuple, Union, Optional, Callable, TYPE_CHECKING
 
 import torch
 from PIL import ImageFont, ImageDraw, Image
@@ -10,6 +12,9 @@ from custom_nodes.Comfy_KepListStuff.utils import (
     tensor2pil,
     pil2tensor,
 )
+if TYPE_CHECKING:
+    from mypy.typeshed.stdlib._typeshed import SupportsDunderGT, SupportsDunderLT
+
 
 class ImageLabelOverlay:
     def __init__(self) -> None:
@@ -475,3 +480,59 @@ class EmptyImages:
                     batch_tensor[batch_idx] = pil2tensor(image)
                 ret_images.append(batch_tensor)
         return (ret_images,)
+
+class ImageListLoader:
+    def __init__(self) -> None:
+        pass
+
+    @classmethod
+    def INPUT_TYPES(s) -> Dict[str, Dict[str, Any]]:
+        return {
+            "required": {
+                "folder_path": ("STRING", {}),
+                "file_filter": ("STRING", {"default": "*.png"}),
+                "sort_method": (["numerical", "alphabetical"], {"default": "numerical"}),
+            },
+        }
+
+    RELOAD_INST = True
+    RETURN_TYPES = ("IMAGE",)
+    RETURN_NAMES = ("Images",)
+    INPUT_IS_LIST = False
+    OUTPUT_IS_LIST = (True,)
+    FUNCTION = "load_images"
+
+    CATEGORY = "List Stuff"
+
+    @staticmethod
+    def numerical_sort(file_name: Path) -> int:
+        subbed = re.sub("\D", "", str(file_name))
+        if subbed == "":
+            return 0
+        return int(subbed)
+    
+    
+    @staticmethod
+    def alphabetical_sort(file_name: Path) -> str:
+        return str(file_name)
+
+    def load_images(
+        self, folder_path: str, file_filter: str, sort_method: str
+    ) -> Tuple[List[Tensor]]:
+        folder = Path(folder_path)
+    
+        if not folder.is_dir():
+            raise Exception(f"Folder path {folder_path} does not exist.")
+
+        sort_method_impl: Callable[[str], Union[SupportsDunderGT, SupportsDunderLT]]
+        if sort_method == "numerical":
+            sort_method_impl = self.numerical_sort
+        elif sort_method == "alphabetical":
+            sort_method_impl = self.alphabetical_sort
+        else:
+            raise ValueError(f"Unknown sort method {sort_method}")
+
+        files = sorted(folder.glob(file_filter), key=sort_method_impl)
+        images = [pil2tensor(Image.open(file)) for file in files]
+    
+        return (images,)

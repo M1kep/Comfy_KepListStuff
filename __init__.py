@@ -3,11 +3,13 @@ from custom_nodes.Comfy_KepListStuff.nodes.images import (
     ImageLabelOverlay,
     EmptyImages,
     XYImage,
+    ImageListLoader,
 )
 from custom_nodes.Comfy_KepListStuff.nodes.list_utils import (
     ListLengthNode,
     JoinFloatLists,
     JoinImageLists,
+    StringList,
 )
 from custom_nodes.Comfy_KepListStuff.nodes.range_nodes import (
     IntRangeNode,
@@ -29,9 +31,13 @@ NODE_CLASS_MAPPINGS = {
     "Join Image Lists": JoinImageLists,
     "Join Float Lists": JoinFloatLists,
     "XYAny": UnzippedProductAny,
-    "XYImage": XYImage
+    "XYImage": XYImage,
+    "ImageListLoader": ImageListLoader,
+    "KepStringList": StringList,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
     "Stack Images": "Stack Images(Deprecated)",
+    "ImageListLoader": "Image List Loader",
+    "KepStringList": "String List",
 }
