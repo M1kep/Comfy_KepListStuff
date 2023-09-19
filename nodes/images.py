@@ -141,7 +141,7 @@ class XYImage:
 
     MAIN_LABEL_SIZE = 60
     LABEL_SIZE = 60
-
+    LABEL_COLOR = "#000"
     def xy_image(
             self,
             images: List[Tensor],
@@ -325,14 +325,14 @@ class XYImage:
 
                 font = ImageFont.truetype(fm.findfont(fm.FontProperties()), self.MAIN_LABEL_SIZE)
                 full_draw.rectangle((0, 0, full_w, self.MAIN_LABEL_SIZE), fill="#ffffff")
-                full_draw.text((grid_w//2 + x_label_offset, 0),  this_z_label, anchor='ma', fill="red", font=font)
+                full_draw.text((grid_w//2 + x_label_offset, 0),  this_z_label, anchor='ma', fill=self.LABEL_COLOR, font=font)
                 active_y_offset += self.MAIN_LABEL_SIZE
 
             if has_main_x_label:
                 assert x_main_label is not None
                 font = ImageFont.truetype(fm.findfont(fm.FontProperties()), self.MAIN_LABEL_SIZE)
                 full_draw.rectangle((0, active_y_offset, full_w, self.MAIN_LABEL_SIZE + active_y_offset), fill="#ffffff")
-                full_draw.text((grid_w//2 + x_label_offset, 0 + active_y_offset), x_main_label[0], anchor='ma', fill="red", font=font)
+                full_draw.text((grid_w//2 + x_label_offset, 0 + active_y_offset), x_main_label[0], anchor='ma', fill=self.LABEL_COLOR, font=font)
                 active_y_offset += self.MAIN_LABEL_SIZE
 
             if has_horizontal_labels:
@@ -341,7 +341,7 @@ class XYImage:
                 for label_idx, label in enumerate(x_labels):
                     x_offset = (batch_w * label_idx) + x_label_offset
                     full_draw.rectangle((x_offset, 0 + active_y_offset, x_offset + batch_w, self.LABEL_SIZE + active_y_offset), fill="#ffffff")
-                    full_draw.text((x_offset + (batch_w / 2), 0 + active_y_offset), label, anchor='ma', fill="red", font=font)
+                    full_draw.text((x_offset + (batch_w / 2), 0 + active_y_offset), label, anchor='ma', fill=self.LABEL_COLOR, font=font)
 
             if has_main_y_label:
                 assert y_main_label is not None
@@ -350,7 +350,7 @@ class XYImage:
                 img_txt = Image.new('RGB', (full_h - active_y_offset, self.MAIN_LABEL_SIZE))
                 draw_txt = ImageDraw.Draw(img_txt)
                 draw_txt.rectangle((0, 0, full_h - active_y_offset, self.MAIN_LABEL_SIZE), fill="#ffffff")
-                draw_txt.text(((full_h - active_y_offset)//2, 0),  y_main_label[0], anchor='ma', fill="red", font=font)
+                draw_txt.text(((full_h - active_y_offset)//2, 0),  y_main_label[0], anchor='ma', fill=self.LABEL_COLOR, font=font)
                 img_txt = img_txt.rotate(90, expand=True)
                 full_image.paste(img_txt, (active_x_offset, active_y_offset))
                 active_x_offset += self.MAIN_LABEL_SIZE
@@ -364,7 +364,7 @@ class XYImage:
                     img_txt = Image.new('RGB', (batch_h, self.LABEL_SIZE))
                     draw_txt = ImageDraw.Draw(img_txt)
                     draw_txt.rectangle((0, 0, batch_h, self.LABEL_SIZE), fill="#ffffff")
-                    draw_txt.text((batch_h//2, 0),  label, anchor='ma', fill="red", font=font)
+                    draw_txt.text((batch_h//2, 0),  label, anchor='ma', fill=self.LABEL_COLOR, font=font)
                     img_txt = img_txt.rotate(90, expand=True)
                     full_image.paste(img_txt, (active_x_offset, y_offset))
 
