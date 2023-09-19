@@ -64,16 +64,35 @@ class JoinImageLists:
                 "In1": ("IMAGE",),
                 "In2": ("IMAGE",),
             },
+            "optional": {
+                "In3": ("IMAGE",),
+                "In4": ("IMAGE",),
+                "In5": ("IMAGE",),
+            },
         }
 
     RETURN_TYPES = ("IMAGE", "INT")
     RETURN_NAMES = ("Joined", "Sizes")
     INPUT_IS_LIST = True
-    OUTPUT_IS_LIST = (True,)
+    OUTPUT_IS_LIST = (True, True)
     FUNCTION = "join_lists"
 
     CATEGORY = "List Stuff"
 
-    def join_lists(self, In1: List[Tensor], In2: List[Tensor]) -> Tuple[List[Tensor], List[int]]:
-        sizes = [len(In1), len(In2)]
-        return In1 + In2, sizes
+    def join_lists(
+        self,
+        *args: List[Tensor],
+        **kwargs: List[Tensor],
+    ) -> Tuple[List[Tensor], List[int]]:
+        sizes = []
+        joined = []
+        for arg in args:
+            sizes.append(len(arg))
+            joined.extend(arg)
+        for arg in kwargs.values():
+            if arg is not None:
+                sizes.append(len(arg))
+                joined.extend(arg)
+
+        return joined, sizes
+
