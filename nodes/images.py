@@ -141,7 +141,7 @@ class XYImage:
 
     MAIN_LABEL_SIZE = 60
     LABEL_SIZE = 60
-    Z_LABEL_SIZE = 400
+    Z_LABEL_SIZE = 60
     LABEL_COLOR = "#000"
     def xy_image(
             self,
