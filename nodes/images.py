@@ -119,11 +119,11 @@ class XYImage:
                 "z_enabled": (["False", "True"], {"default": "False"}),
             },
             "optional": {
-                "x_main_label": ("STRING", {}),
-                "y_main_label": ("STRING", {}),
+                "splits_main_label": ("STRING", {}),
+                "items_main_label": ("STRING", {}),
                 "z_main_label": ("STRING", {}),
-                "x_labels": (ANY,{}),
-                "y_labels": (ANY,{}),
+                "per_split_labels": (ANY,{}),
+                "item_labels": (ANY,{}),
                 "z_labels": (ANY,{}),
             }
         }
@@ -149,11 +149,11 @@ class XYImage:
             flip_axis: List[str],
             batch_stack_mode: List[str],
             z_enabled: List[str],
-            x_main_label: Optional[List[str]] = None,
-            y_main_label: Optional[List[str]] = None,
+            splits_main_label: Optional[List[str]] = None,
+            items_main_label: Optional[List[str]] = None,
             z_main_label: Optional[List[str]] = None,
-            x_labels: Optional[List[str]] = None,
-            y_labels: Optional[List[str]] = None,
+            per_split_labels: Optional[List[str]] = None,
+            item_labels: Optional[List[str]] = None,
             z_labels: Optional[List[str]] = None,
     ) -> Tuple[List[Tensor]]:
         if len(flip_axis) != 1:
@@ -162,41 +162,41 @@ class XYImage:
             raise Exception("Only single batch stack mode supported.")
         if len(z_enabled) != 1:
             raise Exception("Only single z_enabled value supported.")
-        if x_main_label is not None and len(x_main_label) != 1:
-            raise Exception("Only single x_main_label value supported.")
-        if y_main_label is not None and len(y_main_label) != 1:
-            raise Exception("Only single y_main_label value supported.")
+        if splits_main_label is not None and len(splits_main_label) != 1:
+            raise Exception("Only single splits_main_label value supported.")
+        if items_main_label is not None and len(items_main_label) != 1:
+            raise Exception("Only single items_main_label value supported.")
         if z_main_label is not None and len(z_main_label) != 1:
             raise Exception("Only single z_main_label value supported.")
 
-        if x_main_label is not None and not isinstance(x_main_label[0], str):
+        if splits_main_label is not None and not isinstance(splits_main_label[0], str):
             try:
-                x_main_label[0] = str(x_main_label[0])
+                splits_main_label[0] = str(splits_main_label[0])
             except:
-                raise Exception("x_main_label must be a string or convertible to a string.")
-        if y_main_label is not None and not isinstance(y_main_label[0], str):
+                raise Exception("splits_main_label must be a string or convertible to a string.")
+        if items_main_label is not None and not isinstance(items_main_label[0], str):
             try:
-                y_main_label[0] = str(y_main_label[0])
+                items_main_label[0] = str(items_main_label[0])
             except:
-                raise Exception("y_main_label must be a string or convertible to a string.")
+                raise Exception("items_main_label must be a string or convertible to a string.")
         if z_main_label is not None and not isinstance(z_main_label[0], str):
             try:
                 z_main_label[0] = str(z_main_label[0])
             except:
                 raise Exception("z_main_label must be a string or convertible to a string.")
 
-        if x_main_label is not None and x_main_label[0] == '':
-            x_main_label = None
-        if y_main_label is not None and y_main_label[0] == '':
-            y_main_label = None
+        if splits_main_label is not None and splits_main_label[0] == '':
+            splits_main_label = None
+        if items_main_label is not None and items_main_label[0] == '':
+            items_main_label = None
         if z_main_label is not None and z_main_label[0] == '':
             z_main_label = None
 
         stack_direction = "horizontal"
         if flip_axis[0] == "True":
             stack_direction = "vertical"
-            x_labels, y_labels = y_labels, x_labels
-            x_main_label, y_main_label = y_main_label, x_main_label
+            per_split_labels, item_labels = item_labels, per_split_labels
+            splits_main_label, items_main_label = items_main_label, splits_main_label
 
         batch_stack_direction = batch_stack_mode[0]
 
@@ -212,18 +212,18 @@ class XYImage:
         batch_size = len(batches[0])
 
         # TODO: Some better way...
-        # Currently chops splits to match x_labels/y_labels and then loops over the split set over and over
+        # Currently chops splits to match per_split_labels/item_labels and then loops over the split set over and over
         num_z = 1
         splits_per_z = len(splits)
         images_per_z = len(images)
         if z_enabled[0] == "True":
-            if y_labels is None or x_labels is None:
-                raise Exception("Must provide x_labels and y_labels when z_enabled is True.")
+            if item_labels is None or per_split_labels is None:
+                raise Exception("Must provide per_split_labels and item_labels when z_enabled is True.")
 
             if stack_direction == "horizontal":
-                splits_per_z = len(x_labels)
+                splits_per_z = len(per_split_labels)
             else:
-                splits_per_z = len(y_labels)
+                splits_per_z = len(item_labels)
 
             num_z = int(len(splits) / splits_per_z)
             splits = splits[:splits_per_z]
@@ -250,13 +250,13 @@ class XYImage:
 
         y_label_offset = 0
         has_horizontal_labels = False
-        if x_labels is not None:
-            x_labels = [str(lbl) for lbl in x_labels]
+        if per_split_labels is not None:
+            per_split_labels = [str(lbl) for lbl in per_split_labels]
             if stack_direction == "horizontal":
-                if len(x_labels) != len(splits):
+                if len(per_split_labels) != len(splits):
                     raise Exception("Number of horizontal labels must match number of splits.")
             else:
-                if len(x_labels) != max(splits):
+                if len(per_split_labels) != max(splits):
                     raise Exception("Number of horizontal labels must match maximum split size.")
             full_h += self.LABEL_SIZE
             y_label_offset = self.LABEL_SIZE
@@ -264,14 +264,14 @@ class XYImage:
 
         x_label_offset = 0
         has_vertical_labels = False
-        if y_labels is not None:
-            y_labels = [str(lbl) for lbl in y_labels]
+        if item_labels is not None:
+            item_labels = [str(lbl) for lbl in item_labels]
             if stack_direction == "horizontal":
-                if len(y_labels) != max(splits):
-                    raise Exception(f"Number of vertical labels must match maximum split size. Got {len(y_labels)} labels for {max(splits)} splits.")
+                if len(item_labels) != max(splits):
+                    raise Exception(f"Number of vertical labels must match maximum split size. Got {len(item_labels)} labels for {max(splits)} splits.")
             else:
-                if len(y_labels) != len(splits):
-                    raise Exception(f"Number of vertical labels must match number of splits. Got {len(y_labels)} labels for {len(splits)} splits.")
+                if len(item_labels) != len(splits):
+                    raise Exception(f"Number of vertical labels must match number of splits. Got {len(item_labels)} labels for {len(splits)} splits.")
             full_w += self.LABEL_SIZE
             x_label_offset = self.LABEL_SIZE
             has_vertical_labels = True
@@ -287,13 +287,13 @@ class XYImage:
 
 
         has_main_x_label = False
-        if x_main_label is not None:
+        if splits_main_label is not None:
             full_h += self.MAIN_LABEL_SIZE
             y_label_offset += self.MAIN_LABEL_SIZE
             has_main_x_label = True
 
         has_main_y_label = False
-        if y_main_label is not None:
+        if items_main_label is not None:
             full_w += self.MAIN_LABEL_SIZE
             x_label_offset += self.MAIN_LABEL_SIZE
             has_main_y_label = True
@@ -329,36 +329,36 @@ class XYImage:
                 active_y_offset += self.MAIN_LABEL_SIZE
 
             if has_main_x_label:
-                assert x_main_label is not None
+                assert splits_main_label is not None
                 font = ImageFont.truetype(fm.findfont(fm.FontProperties()), self.MAIN_LABEL_SIZE)
                 full_draw.rectangle((0, active_y_offset, full_w, self.MAIN_LABEL_SIZE + active_y_offset), fill="#ffffff")
-                full_draw.text((grid_w//2 + x_label_offset, 0 + active_y_offset), x_main_label[0], anchor='ma', fill=self.LABEL_COLOR, font=font)
+                full_draw.text((grid_w//2 + x_label_offset, 0 + active_y_offset), splits_main_label[0], anchor='ma', fill=self.LABEL_COLOR, font=font)
                 active_y_offset += self.MAIN_LABEL_SIZE
 
             if has_horizontal_labels:
-                assert x_labels is not None
+                assert per_split_labels is not None
                 font = ImageFont.truetype(fm.findfont(fm.FontProperties()), self.LABEL_SIZE)
-                for label_idx, label in enumerate(x_labels):
+                for label_idx, label in enumerate(per_split_labels):
                     x_offset = (batch_w * label_idx) + x_label_offset
                     full_draw.rectangle((x_offset, 0 + active_y_offset, x_offset + batch_w, self.LABEL_SIZE + active_y_offset), fill="#ffffff")
                     full_draw.text((x_offset + (batch_w / 2), 0 + active_y_offset), label, anchor='ma', fill=self.LABEL_COLOR, font=font)
 
             if has_main_y_label:
-                assert y_main_label is not None
+                assert items_main_label is not None
                 font = ImageFont.truetype(fm.findfont(fm.FontProperties()), self.MAIN_LABEL_SIZE)
 
                 img_txt = Image.new('RGB', (full_h - active_y_offset, self.MAIN_LABEL_SIZE))
                 draw_txt = ImageDraw.Draw(img_txt)
                 draw_txt.rectangle((0, 0, full_h - active_y_offset, self.MAIN_LABEL_SIZE), fill="#ffffff")
-                draw_txt.text(((full_h - active_y_offset)//2, 0),  y_main_label[0], anchor='ma', fill=self.LABEL_COLOR, font=font)
+                draw_txt.text(((full_h - active_y_offset)//2, 0),  items_main_label[0], anchor='ma', fill=self.LABEL_COLOR, font=font)
                 img_txt = img_txt.rotate(90, expand=True)
                 full_image.paste(img_txt, (active_x_offset, active_y_offset))
                 active_x_offset += self.MAIN_LABEL_SIZE
 
             if has_vertical_labels:
-                assert y_labels is not None
+                assert item_labels is not None
                 font = ImageFont.truetype(fm.findfont(fm.FontProperties()), self.LABEL_SIZE)
-                for label_idx, label in enumerate(y_labels):
+                for label_idx, label in enumerate(item_labels):
                     y_offset = (batch_h * label_idx) + y_label_offset
 
                     img_txt = Image.new('RGB', (batch_h, self.LABEL_SIZE))
