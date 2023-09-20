@@ -114,7 +114,7 @@ class XYImage:
             "required": {
                 "images": ("IMAGE",),
                 "splits": ("INT", {"forceInput": True, "min": 1}),
-                "split_layout": (["row", "column"], {"default": "row"}),
+                "flip_axis": (["False", "True"], {"default": "False"}),
                 "batch_stack_mode": (["horizontal", "vertical"], {"default": "horizontal"}),
                 "z_enabled": (["False", "True"], {"default": "False"}),
             },
@@ -147,7 +147,7 @@ class XYImage:
             self,
             images: List[Tensor],
             splits: List[int],
-            split_layout: List[str],
+            flip_axis: List[str],
             batch_stack_mode: List[str],
             z_enabled: List[str],
             x_main_label: Optional[List[str]] = None,
@@ -157,8 +157,8 @@ class XYImage:
             y_labels: Optional[List[str]] = None,
             z_labels: Optional[List[str]] = None,
     ) -> Tuple[List[Tensor]]:
-        if len(split_layout) != 1:
-            raise Exception("Only single split_layout value supported.")
+        if len(flip_axis) != 1:
+            raise Exception("Only single flip_axis value supported.")
         if len(batch_stack_mode) != 1:
             raise Exception("Only single batch stack mode supported.")
         if len(z_enabled) != 1:
@@ -194,7 +194,7 @@ class XYImage:
             z_main_label = None
 
         stack_direction = "horizontal"
-        if split_layout[0] == "row":
+        if flip_axis[0] == "True":
             stack_direction = "vertical"
             x_labels, y_labels = y_labels, x_labels
             x_main_label, y_main_label = y_main_label, x_main_label
