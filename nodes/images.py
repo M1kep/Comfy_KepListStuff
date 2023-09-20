@@ -141,6 +141,7 @@ class XYImage:
 
     MAIN_LABEL_SIZE = 60
     LABEL_SIZE = 60
+    Z_LABEL_SIZE = 400
     LABEL_COLOR = "#000"
     def xy_image(
             self,
@@ -280,11 +281,12 @@ class XYImage:
         if z_labels is not None:
             has_z_labels = True
             z_labels = [str(lbl) for lbl in z_labels]
-            full_h += self.LABEL_SIZE
-            y_label_offset += self.LABEL_SIZE
+            if z_main_label is not None:
+                z_labels = [f"{z_main_label[0]}: {lbl}" for lbl in z_labels]
+            full_h += self.Z_LABEL_SIZE
+            y_label_offset += self.Z_LABEL_SIZE
             if len(z_labels) != num_z:
                 raise Exception(f"Number of z_labels must match number of z splits. Got {len(z_labels)} labels for {num_z} splits.")
-
 
         has_main_x_label = False
         if splits_main_label is not None:
@@ -298,14 +300,6 @@ class XYImage:
             x_label_offset += self.MAIN_LABEL_SIZE
             has_main_y_label = True
 
-        has_main_z_label = False
-        if z_enabled[0] == "True" and z_main_label is not None:
-            # Main Z label is combined with Z labels, so don't add extra space if Z labels already exist
-            if not has_z_labels:
-                full_h += self.MAIN_LABEL_SIZE
-                y_label_offset += self.MAIN_LABEL_SIZE
-            has_main_z_label = True
-
         images = []
         for z_idx in range(num_z):
             full_image = Image.new("RGB", (full_w, full_h))
@@ -316,17 +310,11 @@ class XYImage:
             batch_idx = 0
             active_y_offset = 0
             active_x_offset = 0
-            if has_main_z_label:
-                assert z_main_label is not None
-                this_z_label = z_main_label[0]
-                if has_z_labels:
-                    assert z_labels is not None
-                    this_z_label += f": {z_labels[z_idx]}"
-
-                font = ImageFont.truetype(fm.findfont(fm.FontProperties()), self.MAIN_LABEL_SIZE)
-                full_draw.rectangle((0, 0, full_w, self.MAIN_LABEL_SIZE), fill="#ffffff")
-                full_draw.text((grid_w//2 + x_label_offset, 0),  this_z_label, anchor='ma', fill=self.LABEL_COLOR, font=font)
-                active_y_offset += self.MAIN_LABEL_SIZE
+            if has_z_labels:
+                font = ImageFont.truetype(fm.findfont(fm.FontProperties()), self.Z_LABEL_SIZE)
+                full_draw.rectangle((0, 0, full_w, self.Z_LABEL_SIZE), fill="#ffffff")
+                full_draw.text((grid_w//2 + x_label_offset, 0),  z_labels[z_idx], anchor='ma', fill=self.LABEL_COLOR, font=font)
+                active_y_offset += self.Z_LABEL_SIZE
 
             if has_main_x_label:
                 assert splits_main_label is not None
