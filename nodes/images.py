@@ -381,6 +381,49 @@ class XYImage:
             images.append(pil2tensor(full_image))
         return (images,)
 
+class VariableImageBuilder:
+    def __init__(self) -> None:
+        pass
+
+    @classmethod
+    def INPUT_TYPES(s) -> Dict[str, Dict[str, Any]]:
+        return {
+            "required": {
+                "r": ("INT", {"defaultInput": True, "min": 0, "max": 255}),
+                "g": ("INT", {"defaultInput": True, "min": 0, "max": 255}),
+                "b": ("INT", {"defaultInput": True, "min": 0, "max": 255}),
+                "a": ("INT", {"defaultInput": True, "min": 0, "max": 255}),
+                "width": ("INT", {"defaultInput": False, "default": 512}),
+                "height": ("INT", {"defaultInput": False, "default": 512}),
+                "batch_size": ("INT", {"default": 1, "min": 1}),
+            },
+        }
+
+    RELOAD_INST = True
+    RETURN_TYPES = ("IMAGE",)
+    RETURN_NAMES = ("Image",)
+    OUTPUT_IS_LIST = (False,)
+    FUNCTION = "generate_images"
+
+    CATEGORY = "List Stuff"
+
+    def generate_images(
+            self,
+            r: int,
+            g: int,
+            b: int,
+            a: int,
+            width: int,
+            height: int,
+            batch_size: int,
+    ) -> Tuple[Tensor]:
+        batch_tensors: List[Tensor] = []
+        for _ in range(batch_size):
+            image = Image.new("RGB", (width, height), color=(r, g, b, a))
+            batch_tensors.append(pil2tensor(image))
+        return (torch.cat(batch_tensors),)
+
+
 class EmptyImages:
     def __init__(self) -> None:
         pass

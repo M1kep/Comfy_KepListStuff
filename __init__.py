@@ -4,6 +4,7 @@ from custom_nodes.Comfy_KepListStuff.nodes.images import (
     EmptyImages,
     XYImage,
     ImageListLoader,
+    VariableImageBuilder,
 )
 from custom_nodes.Comfy_KepListStuff.nodes.list_utils import (
     ListLengthNode,
@@ -34,10 +35,12 @@ NODE_CLASS_MAPPINGS = {
     "XYImage": XYImage,
     "ImageListLoader": ImageListLoader,
     "KepStringList": StringList,
+    "Kep_VariableImageBuilder": VariableImageBuilder
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
     "Stack Images": "Stack Images(Deprecated)",
     "ImageListLoader": "Image List Loader",
     "KepStringList": "String List",
+    "Kep_VariableImageBuilder": "Variable Image Builder"
 }
