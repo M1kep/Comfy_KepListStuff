@@ -28,6 +28,32 @@ class ListLengthNode:
     def get_len(self, In: List[Any]) -> Tuple[int]:
         return (len(In),)
 
+class RepeatList:
+    def __init__(self) -> None:
+        pass
+
+    @classmethod
+    def INPUT_TYPES(self) -> Dict[str, Dict[str, Any]]:
+        return {
+            "required": {
+                "In": (any_type, {}),
+                "Count": ("INT", {"default": 0, "min": 0, "max": 99999, "step": 1}),
+            },
+        }
+
+    RETURN_TYPES = (any_type,)
+    RETURN_NAMES = ("Extended",)
+    INPUT_IS_LIST = True
+    OUTPUT_IS_LIST = (True,)
+    FUNCTION = "repeat_list"
+
+    CATEGORY = "List Stuff"
+
+    def repeat_list(self, In: List[Any], Count: List[int]) -> Tuple[List[Any]]:
+        if len(Count) != 1:
+            raise ValueError("Count does not support multiple values")
+        return (In * Count[0],)
+
 class ReverseList:
     def __init__(self) -> None:
         pass
