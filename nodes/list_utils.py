@@ -54,6 +54,50 @@ class RepeatList:
             raise ValueError("Count does not support multiple values")
         return (In * Count[0],)
 
+class JoinListAny:
+    def __init__(self) -> None:
+        pass
+
+    @classmethod
+    def INPUT_TYPES(self) -> Dict[str, Dict[str, Any]]:
+        return {
+            "required": {
+                "In1": (any_type, {}),
+                "In2": (any_type, {}),
+            },
+            "optional": {
+                "In3": (any_type, {}),
+                "In4": (any_type, {}),
+                "In5": (any_type, {}),
+            },
+        }
+
+    RETURN_TYPES = (any_type,)
+    RETURN_NAMES = ("Joined", "Sizes")
+    INPUT_IS_LIST = True
+    OUTPUT_IS_LIST = (True,)
+    FUNCTION = "join_lists"
+
+    CATEGORY = "List Stuff"
+
+
+    def join_lists(
+            self,
+            *args: List[Tensor],
+            **kwargs: List[Tensor],
+    ) -> Tuple[List[Tensor], List[int]]:
+        sizes = []
+        joined = []
+        for arg in args:
+            sizes.append(len(arg))
+            joined.extend(arg)
+        for arg in kwargs.values():
+            if arg is not None:
+                sizes.append(len(arg))
+                joined.extend(arg)
+
+        return joined, sizes
+
 class ReverseList:
     def __init__(self) -> None:
         pass

@@ -13,6 +13,7 @@ from custom_nodes.Comfy_KepListStuff.nodes.list_utils import (
     StringList,
     ReverseList,
     RepeatList,
+    JoinListAny,
 )
 from custom_nodes.Comfy_KepListStuff.nodes.range_nodes import (
     IntRangeNode,
@@ -39,7 +40,8 @@ NODE_CLASS_MAPPINGS = {
     "KepStringList": StringList,
     "Kep_VariableImageBuilder": VariableImageBuilder,
     "Kep_ReverseList": ReverseList,
-    "Kep_RepeatList": RepeatList
+    "Kep_RepeatList": RepeatList,
+    "Kep_JoinListAny": JoinListAny
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -48,5 +50,6 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "KepStringList": "String List",
     "Kep_VariableImageBuilder": "Variable Image Builder",
     "Kep_ReverseList": "Reverse List",
-    "Kep_RepeatList": "Repeat List"
+    "Kep_RepeatList": "Repeat List",
+    "Kep_JoinListAny": "Join List Any"
 }
