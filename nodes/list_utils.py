@@ -28,6 +28,26 @@ class ListLengthNode:
     def get_len(self, In: List[Any]) -> Tuple[int]:
         return (len(In),)
 
+class ReverseList:
+    def __init__(self) -> None:
+        pass
+
+    @classmethod
+    def INPUT_TYPES(self) -> Dict[str, Dict[str, Any]]:
+        return {
+            "required": {"In": (any_type, {})},
+        }
+
+    RETURN_TYPES = (any_type,)
+    RETURN_NAMES = ("Reversed",)
+    INPUT_IS_LIST = True
+    OUTPUT_IS_LIST = (True,)
+    FUNCTION = "reverse_list"
+
+    CATEGORY = "List Stuff"
+
+    def reverse_list(self, In: List[Any]) -> Tuple[List[Any]]:
+        return (In[::-1],)
 
 class JoinFloatLists:
     def __init__(self) -> None:
