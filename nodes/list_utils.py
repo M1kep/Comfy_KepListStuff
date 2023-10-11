@@ -228,3 +228,26 @@ class StringList:
                 ret.append(arg)
 
         return ret, [len(ret)]
+
+class StringListFromNewline:
+    def __init__(self) -> None:
+        pass
+
+    @classmethod
+    def INPUT_TYPES(self) -> Dict[str, Dict[str, Any]]:
+        return {
+            "required": {
+                "Text": ("STRING", {"multiline": True}),
+            },
+        }
+
+    RETURN_TYPES = ("STRING", "INT")
+    RETURN_NAMES = ("Strings", "Num Strings")
+    INPUT_IS_LIST = False
+    OUTPUT_IS_LIST = (True,)
+    FUNCTION = "to_string_list"
+
+    CATEGORY = "List Stuff"
+
+    def to_string_list(self, Text: str) -> Tuple[List[str], List[int]]:
+        return Text.split("\n"), [len(Text.split("\n"))]
