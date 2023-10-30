@@ -22,6 +22,7 @@ from custom_nodes.Comfy_KepListStuff.nodes.range_nodes import (
     IntNumStepsRangeNode,
     FloatNumStepsRangeNode,
 )
+from custom_nodes.Comfy_KepListStuff.nodes.strings import StringReplace
 from custom_nodes.Comfy_KepListStuff.nodes.xy import UnzippedProductAny
 
 NODE_CLASS_MAPPINGS = {
@@ -43,7 +44,8 @@ NODE_CLASS_MAPPINGS = {
     "Kep_VariableImageBuilder": VariableImageBuilder,
     "Kep_ReverseList": ReverseList,
     "Kep_RepeatList": RepeatList,
-    "Kep_JoinListAny": JoinListAny
+    "Kep_JoinListAny": JoinListAny,
+    "Kep_ReplaceList": StringReplace,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -55,4 +57,5 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "Kep_RepeatList": "Repeat List",
     "Kep_JoinListAny": "Join List Any",
     "KepStringListFromNewline": "String List From Newline",
+    "Kep_ReplaceList": "Replace With List",
 }
